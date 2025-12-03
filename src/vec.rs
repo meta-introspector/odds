@@ -1,18 +1,17 @@
 //! Extensions to `Vec`
 //!
 //! Requires `feature="std-vec"`
-#![cfg(feature="std-vec")]
+#![cfg(feature = "std-vec")]
 
 use slice::SliceFind;
 
-
 /// Create a new vec from the iterable
 pub fn vec<I>(iterable: I) -> Vec<I::Item>
-    where I: IntoIterator
+where
+    I: IntoIterator,
 {
     iterable.into_iter().collect()
 }
-
 
 /// Extra methods for `Vec<T>`
 ///
@@ -37,14 +36,16 @@ pub trait VecExt<T> {
     /// assert_eq!(vec, [20, 40]);
     /// ```
     fn retain_mut<F>(&mut self, f: F)
-        where F: FnMut(&mut T) -> bool;
+    where
+        F: FnMut(&mut T) -> bool;
 }
 
 impl<T> VecExt<T> for Vec<T> {
     // Adapted from libcollections/vec.rs in Rust
     // Primary author in Rust: Michael Darakananda
     fn retain_mut<F>(&mut self, mut f: F)
-        where F: FnMut(&mut T) -> bool
+    where
+        F: FnMut(&mut T) -> bool,
     {
         let len = self.len();
         let mut del = 0;
@@ -65,9 +66,6 @@ impl<T> VecExt<T> for Vec<T> {
     }
 }
 
-
-
-
 pub trait VecFindRemove {
     type Item;
     /// Linear search for the first element equal to `elt` and remove
@@ -75,25 +73,29 @@ pub trait VecFindRemove {
     ///
     /// Return its index and the value itself.
     fn find_remove<U>(&mut self, elt: &U) -> Option<(usize, Self::Item)>
-        where Self::Item: PartialEq<U>;
+    where
+        Self::Item: PartialEq<U>;
 
     /// Linear search for the last element equal to `elt` and remove
     /// it if found.
     ///
     /// Return its index and the value itself.
     fn rfind_remove<U>(&mut self, elt: &U) -> Option<(usize, Self::Item)>
-        where Self::Item: PartialEq<U>;
+    where
+        Self::Item: PartialEq<U>;
 }
 
 impl<T> VecFindRemove for Vec<T> {
     type Item = T;
     fn find_remove<U>(&mut self, elt: &U) -> Option<(usize, Self::Item)>
-        where Self::Item: PartialEq<U>
+    where
+        Self::Item: PartialEq<U>,
     {
         self.find(elt).map(|i| (i, self.remove(i)))
     }
     fn rfind_remove<U>(&mut self, elt: &U) -> Option<(usize, Self::Item)>
-        where Self::Item: PartialEq<U>
+    where
+        Self::Item: PartialEq<U>,
     {
         self.rfind(elt).map(|i| (i, self.remove(i)))
     }

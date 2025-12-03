@@ -1,7 +1,7 @@
 //! Slice iterators
 
-use crate::std::mem::size_of;
 use crate::std::marker::PhantomData;
+use crate::std::mem::size_of;
 use crate::std::ops::Index;
 
 pub use rawslice::SliceIter;
@@ -24,13 +24,16 @@ pub struct SliceCopyIter<'a, T: 'a> {
     ty: PhantomData<&'a T>,
 }
 
-impl<'a, T> Copy for SliceCopyIter<'a, T> { }
+impl<'a, T> Copy for SliceCopyIter<'a, T> {}
 impl<'a, T> Clone for SliceCopyIter<'a, T> {
-    fn clone(&self) -> Self { *self }
+    fn clone(&self) -> Self {
+        *self
+    }
 }
 
 impl<'a, T> SliceCopyIter<'a, T>
-    where T: Copy
+where
+    T: Copy,
 {
     /// Create a new slice copy iterator
     ///
@@ -79,9 +82,7 @@ impl<'a, T> SliceCopyIter<'a, T>
     /// Return the next iterator element, without stepping the iterator.
     pub fn peek_next(&self) -> Option<<Self as Iterator>::Item> {
         if self.ptr != self.end {
-            unsafe {
-                Some(*self.ptr)
-            }
+            unsafe { Some(*self.ptr) }
         } else {
             None
         }
@@ -89,7 +90,8 @@ impl<'a, T> SliceCopyIter<'a, T>
 }
 
 impl<'a, T> Iterator for SliceCopyIter<'a, T>
-    where T: Copy,
+where
+    T: Copy,
 {
     type Item = T;
     #[inline]
@@ -120,7 +122,8 @@ impl<'a, T> Iterator for SliceCopyIter<'a, T>
 }
 
 impl<'a, T> DoubleEndedIterator for SliceCopyIter<'a, T>
-    where T: Copy
+where
+    T: Copy,
 {
     #[inline]
     fn next_back(&mut self) -> Option<Self::Item> {
@@ -136,10 +139,11 @@ impl<'a, T> DoubleEndedIterator for SliceCopyIter<'a, T>
     }
 }
 
-impl<'a, T> ExactSizeIterator for SliceCopyIter<'a, T> where T: Copy { }
+impl<'a, T> ExactSizeIterator for SliceCopyIter<'a, T> where T: Copy {}
 
 impl<'a, T> From<&'a [T]> for SliceCopyIter<'a, T>
-    where T: Copy
+where
+    T: Copy,
 {
     fn from(slice: &'a [T]) -> Self {
         assert!(size_of::<T>() != 0);
@@ -152,25 +156,22 @@ impl<'a, T> From<&'a [T]> for SliceCopyIter<'a, T>
 }
 
 impl<'a, T> Default for SliceCopyIter<'a, T>
-    where T: Copy
+where
+    T: Copy,
 {
     /// Create an empty `SliceCopyIter`.
     fn default() -> Self {
-        unsafe {
-            SliceCopyIter::new(0x1 as *const T, 0x1 as *const T)
-        }
+        unsafe { SliceCopyIter::new(0x1 as *const T, 0x1 as *const T) }
     }
 }
 
 impl<'a, T> Index<usize> for SliceCopyIter<'a, T>
-    where T: Copy
+where
+    T: Copy,
 {
     type Output = T;
     fn index(&self, i: usize) -> &T {
         assert!(i < self.len());
-        unsafe {
-            &*self.ptr.offset(i as isize)
-        }
+        unsafe { &*self.ptr.offset(i as isize) }
     }
 }
-

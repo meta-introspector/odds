@@ -2,14 +2,14 @@
 
 pub mod blocked;
 pub mod iter;
-pub mod unalign;
 pub mod rev;
+pub mod unalign;
 
 pub use self::rev::RevSlice;
 
-use crate::std::ptr;
 use crate::std::cmp::min;
 use crate::std::mem::{align_of, size_of};
+use crate::std::ptr;
 use crate::std::slice::from_raw_parts;
 
 use rawslice::SliceIter;
@@ -84,12 +84,18 @@ pub fn rotate_left<T>(data: &mut [T], steps: usize) {
 fn test_shared_prefix() {
     let mut a = [0xff; 256];
     let b = [0xff; 256];
-    for byte in 0..255 { // don't test byte 255
+    for byte in 0..255 {
+        // don't test byte 255
         for i in 0..a.len() {
             a[i] = byte;
             let ans = shared_prefix(&a, &b);
-            assert!(ans == i, "failed for index {} and byte {:x} (got ans={})",
-                    i, byte, ans);
+            assert!(
+                ans == i,
+                "failed for index {} and byte {:x} (got ans={})",
+                i,
+                byte,
+                ans
+            );
             a[i] = 0xff;
         }
     }
@@ -102,25 +108,29 @@ pub trait SliceFind {
     ///
     /// Return its index if it is found, or None.
     fn find<U: ?Sized>(&self, elt: &U) -> Option<usize>
-        where Self::Item: PartialEq<U>;
+    where
+        Self::Item: PartialEq<U>;
 
     /// Linear search for the last occurrence  `elt` in the slice.
     ///
     /// Return its index if it is found, or None.
     fn rfind<U: ?Sized>(&self, elt: &U) -> Option<usize>
-        where Self::Item: PartialEq<U>;
+    where
+        Self::Item: PartialEq<U>;
 }
 
-impl<T> SliceFind for [T] { 
+impl<T> SliceFind for [T] {
     type Item = T;
     fn find<U: ?Sized>(&self, elt: &U) -> Option<usize>
-        where Self::Item: PartialEq<U>
+    where
+        Self::Item: PartialEq<U>,
     {
         SliceIter::from(self).position(move |x| *x == *elt)
     }
 
     fn rfind<U: ?Sized>(&self, elt: &U) -> Option<usize>
-        where Self::Item: PartialEq<U>
+    where
+        Self::Item: PartialEq<U>,
     {
         SliceIter::from(self).rposition(move |x| *x == *elt)
     }
@@ -134,76 +144,77 @@ pub trait SliceFindSplit {
     /// Return the part before and the part including and after the element.
     /// If the element is not found, the second half is empty.
     fn find_split<U: ?Sized>(&self, elt: &U) -> (&Self, &Self)
-        where Self::Item: PartialEq<U>;
+    where
+        Self::Item: PartialEq<U>;
 
     /// Linear search for the last occurrence  `elt` in the slice.
     ///
     /// Return the part before and the part including and after the element.
     /// If the element is not found, the first half is empty.
     fn rfind_split<U: ?Sized>(&self, elt: &U) -> (&Self, &Self)
-        where Self::Item: PartialEq<U>;
+    where
+        Self::Item: PartialEq<U>;
 
     /// Linear search for the first occurrence  `elt` in the slice.
     ///
     /// Return the part before and the part including and after the element.
     /// If the element is not found, the second half is empty.
     fn find_split_mut<U: ?Sized>(&mut self, elt: &U) -> (&mut Self, &mut Self)
-        where Self::Item: PartialEq<U>;
+    where
+        Self::Item: PartialEq<U>;
 
     /// Linear search for the last occurrence  `elt` in the slice.
     ///
     /// Return the part before and the part including and after the element.
     /// If the element is not found, the first half is empty.
     fn rfind_split_mut<U: ?Sized>(&mut self, elt: &U) -> (&mut Self, &mut Self)
-        where Self::Item: PartialEq<U>;
+    where
+        Self::Item: PartialEq<U>;
 }
-
 
 /// Unchecked version of `xs.split_at(i)`.
 unsafe fn split_at_unchecked<T>(xs: &[T], i: usize) -> (&[T], &[T]) {
-    (get_unchecked(xs, ..i),
-     get_unchecked(xs, i..))
+    (get_unchecked(xs, ..i), get_unchecked(xs, i..))
 }
 
-impl<T> SliceFindSplit for [T] { 
+impl<T> SliceFindSplit for [T] {
     type Item = T;
     fn find_split<U: ?Sized>(&self, elt: &U) -> (&Self, &Self)
-        where Self::Item: PartialEq<U>
+    where
+        Self::Item: PartialEq<U>,
     {
         let i = self.find(elt).unwrap_or(self.len());
-        unsafe {
-            split_at_unchecked(self, i)
-        }
+        unsafe { split_at_unchecked(self, i) }
     }
 
     fn find_split_mut<U: ?Sized>(&mut self, elt: &U) -> (&mut Self, &mut Self)
-        where Self::Item: PartialEq<U>
+    where
+        Self::Item: PartialEq<U>,
     {
         let i = self.find(elt).unwrap_or(self.len());
         self.split_at_mut(i)
     }
 
     fn rfind_split<U: ?Sized>(&self, elt: &U) -> (&Self, &Self)
-        where Self::Item: PartialEq<U>
+    where
+        Self::Item: PartialEq<U>,
     {
         let i = self.rfind(elt).unwrap_or(0);
-        unsafe {
-            split_at_unchecked(self, i)
-        }
+        unsafe { split_at_unchecked(self, i) }
     }
 
     fn rfind_split_mut<U: ?Sized>(&mut self, elt: &U) -> (&mut Self, &mut Self)
-        where Self::Item: PartialEq<U>
+    where
+        Self::Item: PartialEq<U>,
     {
         let i = self.rfind(elt).unwrap_or(0);
         self.split_at_mut(i)
     }
 }
 
-
 /// "plain old data": Types that we can stick arbitrary bit patterns into,
 /// and thus use them as blocks in `split_aligned_for` or in `UnalignedIter`.
-pub unsafe trait Pod : Copy { }
+pub unsafe trait Pod: Copy {}
 macro_rules! impl_pod {
     (@array $($e:expr),+) => {
         $(
@@ -216,9 +227,8 @@ macro_rules! impl_pod {
         )+
     };
 }
-impl_pod!{u8 u16 u32 u64 usize i8 i16 i32 i64 isize}
-impl_pod!{@array 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16}
-
+impl_pod! {u8 u16 u32 u64 usize i8 i16 i32 i64 isize}
+impl_pod! {@array 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16}
 
 /// Split the input slice into three chunks,
 /// so that the middle chunk is a slice of a larger "block size"
@@ -251,7 +261,11 @@ pub fn split_aligned_for<T: Pod>(data: &[u8]) -> (&[u8], &[T], &[u8]) {
     let align_t = align_of::<T>();
     let size_t = size_of::<T>();
     let align_ptr = ptr as usize & (align_t - 1);
-    let prefix = if align_ptr == 0 { 0 } else { align_t - align_ptr };
+    let prefix = if align_ptr == 0 {
+        0
+    } else {
+        align_t - align_ptr
+    };
     let t_len;
 
     if prefix > data.len() {
@@ -260,10 +274,14 @@ pub fn split_aligned_for<T: Pod>(data: &[u8]) -> (&[u8], &[T], &[u8]) {
         t_len = (data.len() - prefix) / size_t;
     }
     unsafe {
-        (from_raw_parts(ptr, prefix),
-         from_raw_parts(ptr.offset(prefix as isize) as *const T, t_len),
-         from_raw_parts(ptr.offset((prefix + t_len * size_t) as isize),
-                        data.len() - t_len * size_t - prefix))
+        (
+            from_raw_parts(ptr, prefix),
+            from_raw_parts(ptr.offset(prefix as isize) as *const T, t_len),
+            from_raw_parts(
+                ptr.offset((prefix + t_len * size_t) as isize),
+                data.len() - t_len * size_t - prefix,
+            ),
+        )
     }
 }
 
@@ -294,22 +312,22 @@ fn test_split_aligned() {
     assert_eq!(b.len(), 0);
 }
 
-
 /* All of these use this trick:
- *
-    for i in 0..4 {
-        if i < data.len() {
-            f(&data[i]);
-        }
-    }
- * The intention is that the range makes sure the compiler
- * sees that the loop is not autovectorized or something that generates
- * a lot of code in vain that does not pay off when it's only 3 elements or less.
- */
+*
+   for i in 0..4 {
+       if i < data.len() {
+           f(&data[i]);
+       }
+   }
+* The intention is that the range makes sure the compiler
+* sees that the loop is not autovectorized or something that generates
+* a lot of code in vain that does not pay off when it's only 3 elements or less.
+*/
 
 #[cfg(test)]
 pub fn unroll_2<'a, T, F>(data: &'a [T], mut f: F)
-    where F: FnMut(&'a T)
+where
+    F: FnMut(&'a T),
 {
     let mut data = data;
     while data.len() >= 2 {
@@ -324,7 +342,8 @@ pub fn unroll_2<'a, T, F>(data: &'a [T], mut f: F)
 }
 #[cfg(test)]
 pub fn unroll_4<'a, T, F>(data: &'a [T], mut f: F)
-    where F: FnMut(&'a T)
+where
+    F: FnMut(&'a T),
 {
     let mut data = data;
     while data.len() >= 4 {
@@ -344,7 +363,8 @@ pub fn unroll_4<'a, T, F>(data: &'a [T], mut f: F)
 
 #[cfg(test)]
 pub fn unroll_8<'a, T, F>(data: &'a [T], mut f: F)
-    where F: FnMut(&'a T)
+where
+    F: FnMut(&'a T),
 {
     let mut data = data;
     while data.len() >= 8 {
@@ -368,7 +388,8 @@ pub fn unroll_8<'a, T, F>(data: &'a [T], mut f: F)
 
 #[cfg(test)]
 pub fn zip_unroll_4<'a, 'b, A, B, F>(a: &'a [A], b: &'b [B], mut f: F)
-    where F: FnMut(usize, &'a A, &'b B)
+where
+    F: FnMut(usize, &'a A, &'b B),
 {
     let len = min(a.len(), b.len());
     let mut a = &a[..len];
@@ -391,7 +412,8 @@ pub fn zip_unroll_4<'a, 'b, A, B, F>(a: &'a [A], b: &'b [B], mut f: F)
 
 #[cfg(test)]
 pub fn zip_unroll_8<'a, 'b, A, B, F>(a: &'a [A], b: &'b [B], mut f: F)
-    where F: FnMut(usize, &'a A, &'b B)
+where
+    F: FnMut(usize, &'a A, &'b B),
 {
     let len = min(a.len(), b.len());
     let mut a = &a[..len];
@@ -437,4 +459,3 @@ fn test_find() {
     assert_eq!(v.rfind_split(&7), v.split_at(2));
     assert_eq!(v.rfind_split(&2), v.split_at(v.len() - 2));
 }
-

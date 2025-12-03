@@ -1,31 +1,32 @@
-
 #![feature(test)]
 extern crate test;
 
-extern crate odds;
-extern crate memchr;
 extern crate itertools;
+extern crate memchr;
+extern crate odds;
 
-#[macro_use] extern crate lazy_static;
+#[macro_use]
+extern crate lazy_static;
 
 use std::mem::{size_of, size_of_val};
-use test::Bencher;
 use test::black_box;
+use test::Bencher;
 
 use itertools::enumerate;
 
 use odds::slice::shared_prefix;
-use odds::stride::Stride;
 use odds::slice::unalign::UnalignedIter;
+use odds::stride::Stride;
 
 #[bench]
 fn find_word_memcmp_ascii(b: &mut Bencher) {
     let words = &*WORDS_ASCII;
     let word = b"the";
     b.iter(|| {
-        words.iter().map(|w|
-            (w.as_bytes() == &word[..]) as usize
-        ).sum::<usize>()
+        words
+            .iter()
+            .map(|w| (w.as_bytes() == &word[..]) as usize)
+            .sum::<usize>()
     });
     b.bytes = words.iter().map(|w| w.len() as u64).sum::<u64>()
 }
@@ -35,13 +36,13 @@ fn find_word_shpfx_ascii(b: &mut Bencher) {
     let words = &*WORDS_ASCII;
     let word = b"the";
     b.iter(|| {
-        words.iter().map(|w|
-            (shared_prefix(w.as_bytes(), &word[..]) == word.len()) as usize
-        ).sum::<usize>()
+        words
+            .iter()
+            .map(|w| (shared_prefix(w.as_bytes(), &word[..]) == word.len()) as usize)
+            .sum::<usize>()
     });
     b.bytes = words.iter().map(|w| w.len() as u64).sum::<u64>()
 }
-
 
 #[bench]
 fn shpfx(bench: &mut Bencher) {
@@ -63,9 +64,7 @@ fn shpfx_memcmp(bench: &mut Bencher) {
     const OFF: usize = 47 * 1024 * 1024;
     b[OFF] = 1;
 
-    bench.iter(|| {
-        &a[..] == &b[..]
-    });
+    bench.iter(|| &a[..] == &b[..]);
     bench.bytes = size_of_val(&b[..OFF]) as u64;
 }
 
@@ -76,9 +75,7 @@ fn shpfx_short(bench: &mut Bencher) {
     const OFF: usize = 47 * 1024;
     b[OFF] = 1;
 
-    bench.iter(|| {
-        shared_prefix(&a, &b)
-    });
+    bench.iter(|| shared_prefix(&a, &b));
     bench.bytes = size_of_val(&b[..OFF]) as u64;
 }
 
@@ -89,21 +86,19 @@ fn shpfx_memcmp_short(bench: &mut Bencher) {
     const OFF: usize = 47 * 1024;
     b[OFF] = 1;
 
-    bench.iter(|| {
-        &a[..] == &b[..]
-    });
+    bench.iter(|| &a[..] == &b[..]);
     bench.bytes = size_of_val(&b[..OFF]) as u64;
 }
 
-fn bench_data() -> Vec<u8> { vec![b'z'; 10_000] }
+fn bench_data() -> Vec<u8> {
+    vec![b'z'; 10_000]
+}
 
 #[bench]
 fn optimized_memchr(b: &mut test::Bencher) {
     let haystack = bench_data();
     let needle = b'a';
-    b.iter(|| {
-        memchr::memchr(needle, &haystack)
-    });
+    b.iter(|| memchr::memchr(needle, &haystack));
     b.bytes = haystack.len() as u64;
 }
 
@@ -111,9 +106,7 @@ fn optimized_memchr(b: &mut test::Bencher) {
 fn odds_memchr(b: &mut Bencher) {
     let haystack = bench_data();
     let needle = b'a';
-    b.iter(|| {
-        memchr_mockup(needle, &haystack[1..])
-    });
+    b.iter(|| memchr_mockup(needle, &haystack[1..]));
     b.bytes = haystack.len() as u64;
 }
 
@@ -121,9 +114,7 @@ fn odds_memchr(b: &mut Bencher) {
 fn odds_unalign_memchr(b: &mut Bencher) {
     let haystack = bench_data();
     let needle = b'a';
-    b.iter(|| {
-        memchr_unalign(needle, &haystack[1..])
-    });
+    b.iter(|| memchr_unalign(needle, &haystack[1..]));
     b.bytes = haystack.len() as u64;
 }
 
@@ -144,7 +135,8 @@ fn contains_zero_byte(x: usize) -> bool {
 }
 
 fn find<T>(pat: T, text: &[T]) -> Option<usize>
-    where T: PartialEq
+where
+    T: PartialEq,
 {
     text.iter().position(|x| *x == pat)
 }
@@ -215,10 +207,8 @@ fn memchr_unalign(pat: u8, text: &[u8]) -> Option<usize> {
     }
 }
 
-
 #[bench]
-fn slice_iter_pos1(b: &mut Bencher)
-{
+fn slice_iter_pos1(b: &mut Bencher) {
     let xs = black_box(vec![1; 128]);
     b.iter(|| {
         let mut s = 0;
@@ -230,8 +220,7 @@ fn slice_iter_pos1(b: &mut Bencher)
 }
 
 #[bench]
-fn stride_iter_pos1(b: &mut Bencher)
-{
+fn stride_iter_pos1(b: &mut Bencher) {
     let xs = black_box(vec![1; 128]);
     b.iter(|| {
         let mut s = 0;
@@ -243,8 +232,7 @@ fn stride_iter_pos1(b: &mut Bencher)
 }
 
 #[bench]
-fn stride_iter_rev(b: &mut Bencher)
-{
+fn stride_iter_rev(b: &mut Bencher) {
     let xs = black_box(vec![1; 128]);
     b.iter(|| {
         let mut s = 0;
@@ -256,8 +244,7 @@ fn stride_iter_rev(b: &mut Bencher)
 }
 
 #[bench]
-fn stride_iter_neg1(b: &mut Bencher)
-{
+fn stride_iter_neg1(b: &mut Bencher) {
     let xs = black_box(vec![1; 128]);
     b.iter(|| {
         let mut s = 0;
@@ -268,18 +255,11 @@ fn stride_iter_neg1(b: &mut Bencher)
     });
 }
 
-
-
 //
 
-
 lazy_static! {
-    static ref WORDS_ASCII: Vec<String> = {
-        LONG.split_whitespace().map(String::from).collect()
-    };
-    static ref WORDS_CY: Vec<String> = {
-        LONG_CY.split_whitespace().map(String::from).collect()
-    };
+    static ref WORDS_ASCII: Vec<String> = { LONG.split_whitespace().map(String::from).collect() };
+    static ref WORDS_CY: Vec<String> = { LONG_CY.split_whitespace().map(String::from).collect() };
 }
 
 #[bench]
@@ -287,9 +267,10 @@ fn memchr_words_ascii(b: &mut Bencher) {
     let words = &*WORDS_ASCII;
     let pat = b'a';
     b.iter(|| {
-        words.iter().map(|w|
-            memchr::memchr(pat, w.as_bytes()).unwrap_or(0)
-        ).sum::<usize>()
+        words
+            .iter()
+            .map(|w| memchr::memchr(pat, w.as_bytes()).unwrap_or(0))
+            .sum::<usize>()
     });
     b.bytes = words.iter().map(|w| w.len() as u64).sum::<u64>()
 }
@@ -299,9 +280,10 @@ fn memchr_odds_words_ascii(b: &mut Bencher) {
     let words = &*WORDS_ASCII;
     let pat = b'a';
     b.iter(|| {
-        words.iter().map(|w|
-            memchr_mockup(pat, w.as_bytes()).unwrap_or(0)
-        ).sum::<usize>()
+        words
+            .iter()
+            .map(|w| memchr_mockup(pat, w.as_bytes()).unwrap_or(0))
+            .sum::<usize>()
     });
     b.bytes = words.iter().map(|w| w.len() as u64).sum::<u64>()
 }
@@ -311,9 +293,10 @@ fn memchr_odds_words_cy(b: &mut Bencher) {
     let words = &*WORDS_CY;
     let pat = b'a';
     b.iter(|| {
-        words.iter().map(|w|
-            memchr_mockup(pat, w.as_bytes()).unwrap_or(0)
-        ).sum::<usize>()
+        words
+            .iter()
+            .map(|w| memchr_mockup(pat, w.as_bytes()).unwrap_or(0))
+            .sum::<usize>()
     });
     b.bytes = words.iter().map(|w| w.len() as u64).sum::<u64>()
 }
@@ -323,9 +306,10 @@ fn memchr_unalign_words_ascii(b: &mut Bencher) {
     let words = &*WORDS_ASCII;
     let pat = b'a';
     b.iter(|| {
-        words.iter().map(|w|
-            memchr_unalign(pat, w.as_bytes()).unwrap_or(0)
-        ).sum::<usize>()
+        words
+            .iter()
+            .map(|w| memchr_unalign(pat, w.as_bytes()).unwrap_or(0))
+            .sum::<usize>()
     });
     b.bytes = words.iter().map(|w| w.len() as u64).sum::<u64>()
 }
@@ -335,9 +319,10 @@ fn memchr_unalign_words_cy(b: &mut Bencher) {
     let words = &*WORDS_CY;
     let pat = b'a';
     b.iter(|| {
-        words.iter().map(|w|
-            memchr_unalign(pat, w.as_bytes()).unwrap_or(0)
-        ).sum::<usize>()
+        words
+            .iter()
+            .map(|w| memchr_unalign(pat, w.as_bytes()).unwrap_or(0))
+            .sum::<usize>()
     });
     b.bytes = words.iter().map(|w| w.len() as u64).sum::<u64>()
 }
@@ -399,4 +384,3 @@ static LONG_CY: &'static str = "\
 
 Ад ылаборарэт конжыквуюнтюр ентырпрытаряш прё, факэтэ лыгэндоч окюррырэт вим ад, элитр рэформйданч квуй ед. Жюмо зальы либриз мэя ты. Незл зюаз видишчы ан ыюм, но пожжэ молыжтйаы мэль. Фиэрэнт адипижкй ометтантур квюо экз. Ут мольлиз пырикюлёз квуй. Ыт квюиж граэко рыпудяары жят, вим магна обльйквюэ контынтёонэж эю, ты шэа эним компльыктётюр.
 ";
-

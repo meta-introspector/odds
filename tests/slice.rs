@@ -1,8 +1,5 @@
-
 extern crate itertools;
 extern crate odds;
-
-
 
 /// Like CharIndices iterator, except it yields slices instead
 #[derive(Copy, Clone, Debug)]
@@ -11,10 +8,8 @@ struct CharSlices<'a> {
     offset: usize,
 }
 
-impl<'a> CharSlices<'a>
-{
-    pub fn new(s: &'a str) -> Self
-    {
+impl<'a> CharSlices<'a> {
+    pub fn new(s: &'a str) -> Self {
         CharSlices {
             slice: s,
             offset: 0,
@@ -22,14 +17,12 @@ impl<'a> CharSlices<'a>
     }
 }
 
-impl<'a> Iterator for CharSlices<'a>
-{
+impl<'a> Iterator for CharSlices<'a> {
     type Item = (usize, &'a str);
 
-    fn next(&mut self) -> Option<Self::Item>
-    {
+    fn next(&mut self) -> Option<Self::Item> {
         if self.slice.len() == 0 {
-            return None
+            return None;
         }
         // count continuation bytes
         let mut char_len = 1;
@@ -37,7 +30,7 @@ impl<'a> Iterator for CharSlices<'a>
         bytes.next();
         for byte in bytes {
             if (byte & 0xC0) != 0x80 {
-                break
+                break;
             }
             char_len += 1;
         }
@@ -51,4 +44,3 @@ impl<'a> Iterator for CharSlices<'a>
         Some((off, ch_slice))
     }
 }
-

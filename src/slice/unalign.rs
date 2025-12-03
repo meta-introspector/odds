@@ -1,12 +1,11 @@
 //! An iterator for (possibly unaligned) blocking of byte ranges
 
-
-use crate::std::mem::size_of;
 use crate::std::marker::PhantomData;
+use crate::std::mem::size_of;
 use crate::std::ptr;
 
-use crate::slice::Pod;
 use crate::slice::iter::SliceCopyIter;
+use crate::slice::Pod;
 
 /// An iterator of `T` (by value) where each value read from a pointer
 /// that is (possibly) unaligned.
@@ -20,9 +19,11 @@ pub struct UnalignedIter<'a, T: 'a> {
     ty: PhantomData<&'a T>,
 }
 
-impl<'a, T> Copy for UnalignedIter<'a, T> { }
+impl<'a, T> Copy for UnalignedIter<'a, T> {}
 impl<'a, T> Clone for UnalignedIter<'a, T> {
-    fn clone(&self) -> Self { *self }
+    fn clone(&self) -> Self {
+        *self
+    }
 }
 
 impl<'a, T> UnalignedIter<'a, T> {
@@ -42,7 +43,10 @@ impl<'a, T> UnalignedIter<'a, T> {
     /// Create an `UnalignedIter` out of the slice of data, which
     /// iterates first in blocks of `T` (unaligned loads), and
     /// then leaves a tail of the remaining bytes.
-    pub fn from_slice(data: &'a [u8]) -> Self where T: Pod {
+    pub fn from_slice(data: &'a [u8]) -> Self
+    where
+        T: Pod,
+    {
         unsafe {
             let ptr = data.as_ptr();
             let len = data.len();
@@ -62,9 +66,7 @@ impl<'a, T> UnalignedIter<'a, T> {
     /// this can be called at any time, but in particular when the iterator
     /// has returned None.
     pub fn tail(&self) -> SliceCopyIter<'a, u8> {
-        unsafe {
-            SliceCopyIter::new(self.ptr, self.tail_end)
-        }
+        unsafe { SliceCopyIter::new(self.ptr, self.tail_end) }
     }
 
     /// Return `true` if the tail is not empty.
@@ -73,11 +75,12 @@ impl<'a, T> UnalignedIter<'a, T> {
     }
 
     /// Return the next iterator element, without stepping the iterator.
-    pub fn peek_next(&self) -> Option<T> where T: Copy {
+    pub fn peek_next(&self) -> Option<T>
+    where
+        T: Copy,
+    {
         if self.ptr != self.end {
-            unsafe {
-                Some(ptr::read_unaligned(self.ptr as *const T))
-            }
+            unsafe { Some(ptr::read_unaligned(self.ptr as *const T)) }
         } else {
             None
         }
@@ -85,7 +88,8 @@ impl<'a, T> UnalignedIter<'a, T> {
 }
 
 impl<'a, T> Iterator for UnalignedIter<'a, T>
-    where T: Copy,
+where
+    T: Copy,
 {
     type Item = T;
     fn next(&mut self) -> Option<Self::Item> {
@@ -100,7 +104,6 @@ impl<'a, T> Iterator for UnalignedIter<'a, T>
         }
     }
 }
-
 
 #[test]
 fn test_unalign() {

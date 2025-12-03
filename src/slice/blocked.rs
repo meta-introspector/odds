@@ -1,11 +1,10 @@
 //! Blocked iterator
 
-
-use crate::std::mem::size_of;
 use crate::std::marker::PhantomData;
+use crate::std::mem::size_of;
 
-use rawslice::SliceIter;
 use rawpointer::ptrdistance;
+use rawslice::SliceIter;
 
 pub unsafe trait Block {
     type Item;
@@ -27,8 +26,7 @@ macro_rules! impl_pod {
         )+
     };
 }
-impl_pod!{@array 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16}
-
+impl_pod! {@array 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16}
 
 /// An iterator that yields blocks out of the underlying data's range.
 ///
@@ -45,13 +43,16 @@ pub struct BlockedIter<'a, B: 'a, T: 'a> {
     ty2: PhantomData<&'a B>,
 }
 
-impl<'a, B, T> Copy for BlockedIter<'a, B, T> { }
+impl<'a, B, T> Copy for BlockedIter<'a, B, T> {}
 impl<'a, B, T> Clone for BlockedIter<'a, B, T> {
-    fn clone(&self) -> Self { *self }
+    fn clone(&self) -> Self {
+        *self
+    }
 }
 
 impl<'a, B, T> BlockedIter<'a, B, T>
-    where B: Block<Item=T>,
+where
+    B: Block<Item = T>,
 {
     /*
     /// Create an `BlockedIter` from `ptr` and `end`, which must be spaced
@@ -92,9 +93,7 @@ impl<'a, B, T> BlockedIter<'a, B, T>
     /// has returned None.
     #[inline(always)]
     pub fn tail(&self) -> SliceIter<'a, T> {
-        unsafe {
-            SliceIter::new(self.ptr, self.end)
-        }
+        unsafe { SliceIter::new(self.ptr, self.end) }
     }
 
     /// Return `true` if the tail is not empty.
@@ -103,12 +102,9 @@ impl<'a, B, T> BlockedIter<'a, B, T>
     }
 
     /// Return the next iterator element, without stepping the iterator.
-    pub fn peek_next(&self) -> Option<<Self as Iterator>::Item>
-    {
+    pub fn peek_next(&self) -> Option<<Self as Iterator>::Item> {
         if ptrdistance(self.ptr, self.end) >= B::capacity() {
-            unsafe {
-                Some(&*(self.ptr as *const B))
-            }
+            unsafe { Some(&*(self.ptr as *const B)) }
         } else {
             None
         }
@@ -116,7 +112,8 @@ impl<'a, B, T> BlockedIter<'a, B, T>
 }
 
 impl<'a, B, T> Iterator for BlockedIter<'a, B, T>
-    where B: Block<Item=T>,
+where
+    B: Block<Item = T>,
 {
     type Item = &'a B;
     fn next(&mut self) -> Option<Self::Item> {
@@ -137,24 +134,20 @@ impl<'a, B, T> Iterator for BlockedIter<'a, B, T>
     }
 }
 
-impl<'a, B, T> ExactSizeIterator for BlockedIter<'a, B, T>
-    where B: Block<Item=T>,
-{ }
+impl<'a, B, T> ExactSizeIterator for BlockedIter<'a, B, T> where B: Block<Item = T> {}
 
 use crate::std::ops::Index;
 
 impl<'a, B, T> Index<usize> for BlockedIter<'a, B, T>
-    where B: Block<Item=T>,
+where
+    B: Block<Item = T>,
 {
     type Output = B;
     fn index(&self, i: usize) -> &Self::Output {
         assert!(i < self.len());
-        unsafe {
-            &*(self.ptr.offset((i * B::capacity()) as isize) as *const B)
-        }
+        unsafe { &*(self.ptr.offset((i * B::capacity()) as isize) as *const B) }
     }
 }
-
 
 #[test]
 fn test_blocked() {

@@ -1,11 +1,9 @@
-
 #[macro_use]
 extern crate quickcheck;
 
 extern crate odds;
 
 use odds::slice::unalign::UnalignedIter;
-
 
 quickcheck! {
     fn bit_count(v: Vec<u8>, offset: u8) -> bool {
@@ -51,4 +49,3 @@ quickcheck! {
         data.rfind(&pat) == data.iter().rposition(|x| *x == pat)
     }
 }
-

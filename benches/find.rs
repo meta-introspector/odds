@@ -1,11 +1,10 @@
-
 #![feature(test)]
 extern crate test;
 
-extern crate odds;
 extern crate itertools;
+extern crate odds;
 
-use itertools::{cloned};
+use itertools::cloned;
 
 use std::mem::size_of_val;
 
@@ -20,33 +19,27 @@ fn find_split(bench: &mut Bencher) {
     const OFF: usize = 32 * 1024;
     b[OFF] = 1;
 
-    bench.iter(|| {
-        b.find_split(&1)
-    });
+    bench.iter(|| b.find_split(&1));
     bench.bytes = OFF as u64 * size_of_val(&b[0]) as u64;
 }
 
 #[bench]
 fn find_split_short_i32(bench: &mut Bencher) {
-    let mut b = vec![0; 64 ];
-    const OFF: usize = 32 ;
+    let mut b = vec![0; 64];
+    const OFF: usize = 32;
     b[OFF] = 1;
 
-    bench.iter(|| {
-        b.find_split(&1)
-    });
+    bench.iter(|| b.find_split(&1));
     bench.bytes = OFF as u64 * size_of_val(&b[0]) as u64;
 }
 
 #[bench]
 fn find_split_short_u8(bench: &mut Bencher) {
-    let mut b = vec![0u8; 128 ];
+    let mut b = vec![0u8; 128];
     const OFF: usize = 64;
     b[OFF] = 1;
 
-    bench.iter(|| {
-        b.find_split(&1)
-    });
+    bench.iter(|| b.find_split(&1));
     bench.bytes = OFF as u64 * size_of_val(&b[0]) as u64;
 }
 const FIND_SKIP: &'static [usize] = &[3, 9, 4, 16, 3, 2, 1];
@@ -57,8 +50,13 @@ const FIND_SKIP: &'static [usize] = &[3, 9, 4, 16, 3, 2, 1];
 fn find_split_loop_u8(bench: &mut Bencher) {
     let mut b = vec![0u8; 512];
 
-    for i in cloned(FIND_SKIP).cycle().scan(0, |st, x| { *st += x; Some(*st) }) {
-        if i >= b.len() { break; }
+    for i in cloned(FIND_SKIP).cycle().scan(0, |st, x| {
+        *st += x;
+        Some(*st)
+    }) {
+        if i >= b.len() {
+            break;
+        }
         b[i] = 1;
     }
 
@@ -84,9 +82,7 @@ fn rfind_split(bench: &mut Bencher) {
     const OFF: usize = 32 * 1024;
     b[OFF] = 1;
 
-    bench.iter(|| {
-        b.rfind_split(&1)
-    });
+    bench.iter(|| b.rfind_split(&1));
     bench.bytes = OFF as u64 * size_of_val(&b[0]) as u64;
 }
 
@@ -94,8 +90,13 @@ fn rfind_split(bench: &mut Bencher) {
 fn rfind_split_loop_u8(bench: &mut Bencher) {
     let mut b = vec![0u8; 512];
 
-    for i in cloned(FIND_SKIP).cycle().scan(0, |st, x| { *st += x; Some(*st) }) {
-        if i >= b.len() { break; }
+    for i in cloned(FIND_SKIP).cycle().scan(0, |st, x| {
+        *st += x;
+        Some(*st)
+    }) {
+        if i >= b.len() {
+            break;
+        }
         b[i] = 1;
     }
 
@@ -115,7 +116,6 @@ fn rfind_split_loop_u8(bench: &mut Bencher) {
     bench.bytes = size_of_val(&b[..]) as u64;
 }
 
-
 use odds::slice::iter::SliceIter;
 
 #[bench]
@@ -124,9 +124,7 @@ fn iter_all(bench: &mut Bencher) {
     const OFF: usize = 32 * 1024;
     b[OFF] = 1;
 
-    bench.iter(|| {
-        SliceIter::from(&b[..]).all(|x| *x == 0)
-    });
+    bench.iter(|| SliceIter::from(&b[..]).all(|x| *x == 0));
     bench.bytes = OFF as u64 * size_of_val(&b[0]) as u64;
 }
 
@@ -136,9 +134,7 @@ fn iter_find_split(bench: &mut Bencher) {
     const OFF: usize = 32 * 1024;
     b[OFF] = 1;
 
-    bench.iter(|| {
-        SliceIter::from(&b[..]).find(|x| **x == 1)
-    });
+    bench.iter(|| SliceIter::from(&b[..]).find(|x| **x == 1));
     bench.bytes = OFF as u64 * size_of_val(&b[0]) as u64;
 }
 
@@ -148,9 +144,7 @@ fn iter_position(bench: &mut Bencher) {
     const OFF: usize = 32 * 1024;
     b[OFF] = 1;
 
-    bench.iter(|| {
-        SliceIter::from(&b[..]).position(|x| *x == 1)
-    });
+    bench.iter(|| SliceIter::from(&b[..]).position(|x| *x == 1));
     bench.bytes = OFF as u64 * size_of_val(&b[0]) as u64;
 }
 
@@ -160,8 +154,13 @@ fn iter_position(bench: &mut Bencher) {
 fn iterator_find_split_loop_u8(bench: &mut Bencher) {
     let mut b = vec![0u8; 512];
 
-    for i in cloned(FIND_SKIP).cycle().scan(0, |st, x| { *st += x; Some(*st) }) {
-        if i >= b.len() { break; }
+    for i in cloned(FIND_SKIP).cycle().scan(0, |st, x| {
+        *st += x;
+        Some(*st)
+    }) {
+        if i >= b.len() {
+            break;
+        }
         b[i] = 1;
     }
 
@@ -169,7 +168,7 @@ fn iterator_find_split_loop_u8(bench: &mut Bencher) {
         let mut nfind = 0;
         let mut slc = SliceIter::from(&b[..]);
         loop {
-            if let Some(_) =  slc.find(|x| **x == 1) {
+            if let Some(_) = slc.find(|x| **x == 1) {
                 nfind += 1;
             } else {
                 break;
@@ -179,7 +178,6 @@ fn iterator_find_split_loop_u8(bench: &mut Bencher) {
     });
     bench.bytes = size_of_val(&b[..]) as u64;
 }
-
 
 // A find / unroll using blocked iter
 
@@ -195,7 +193,8 @@ macro_rules! foreach {
 }
 
 fn block_position<T, U: ?Sized>(data: &[T], elt: &U) -> Option<usize>
-    where T: PartialEq<U>
+where
+    T: PartialEq<U>,
 {
     const C: usize = 4;
     let mut iter = BlockedIter::<[_; C], _>::from_slice(data);
@@ -223,8 +222,6 @@ fn blocked_iter_position(bench: &mut Bencher) {
     const OFF: usize = 32 * 1024;
     b[OFF] = 1;
 
-    bench.iter(|| {
-        block_position(&b, &1)
-    });
+    bench.iter(|| block_position(&b, &1));
     bench.bytes = OFF as u64 * size_of_val(&b[0]) as u64;
 }

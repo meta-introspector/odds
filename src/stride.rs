@@ -15,7 +15,6 @@ use crate::std::marker;
 use crate::std::mem;
 use crate::std::ops::{Index, IndexMut};
 
-
 /// (the stride) skipped per iteration.
 ///
 /// `Stride` does not support zero-sized types for `A`.
@@ -54,8 +53,7 @@ unsafe impl<'a, A> Sync for StrideMut<'a, A> where A: Sync {}
 
 impl<'a, A> Stride<'a, A> {
     /// Create a Stride iterator from a raw pointer.
-    pub unsafe fn from_ptr_len(begin: *const A, nelem: usize, stride: isize) -> Stride<'a, A>
-    {
+    pub unsafe fn from_ptr_len(begin: *const A, nelem: usize, stride: isize) -> Stride<'a, A> {
         Stride {
             begin: begin,
             offset: 0,
@@ -66,11 +64,9 @@ impl<'a, A> Stride<'a, A> {
     }
 }
 
-impl<'a, A> StrideMut<'a, A>
-{
+impl<'a, A> StrideMut<'a, A> {
     /// Create a StrideMut iterator from a raw pointer.
-    pub unsafe fn from_ptr_len(begin: *mut A, nelem: usize, stride: isize) -> StrideMut<'a, A>
-    {
+    pub unsafe fn from_ptr_len(begin: *mut A, nelem: usize, stride: isize) -> StrideMut<'a, A> {
         StrideMut {
             begin: begin,
             offset: 0,
@@ -87,8 +83,7 @@ fn div_rem(x: usize, d: usize) -> (usize, usize) {
 
 macro_rules! stride_impl {
     (struct $name:ident -> $slice:ty, $getptr:ident, $ptr:ty, $elem:ty) => {
-        impl<'a, A> $name<'a, A>
-        {
+        impl<'a, A> $name<'a, A> {
             /// Create Stride iterator from a slice and the element step count.
             ///
             /// If `step` is negative, start from the back.
@@ -110,8 +105,7 @@ macro_rules! stride_impl {
             /// **Panics** if values of type `A` are zero-sized. <br>
             /// **Panics** if `step` is 0.
             #[inline]
-            pub fn from_slice(xs: $slice, step: isize) -> $name<'a, A>
-            {
+            pub fn from_slice(xs: $slice, step: isize) -> $name<'a, A> {
                 assert!(mem::size_of::<A>() != 0);
                 let ustep = if step < 0 { -step } else { step } as usize;
                 let nelem = if ustep <= 1 {
@@ -120,7 +114,7 @@ macro_rules! stride_impl {
                     let (d, r) = div_rem(xs.len(), ustep);
                     d + if r > 0 { 1 } else { 0 }
                 };
-                let mut begin = xs. $getptr ();
+                let mut begin = xs.$getptr();
                 unsafe {
                     if step > 0 {
                         $name::from_ptr_len(begin, nelem, step)
@@ -137,8 +131,7 @@ macro_rules! stride_impl {
             ///
             /// **Panics** if `step` is 0.
             #[inline]
-            pub fn from_stride(mut it: $name<'a, A>, mut step: isize) -> $name<'a, A>
-            {
+            pub fn from_stride(mut it: $name<'a, A>, mut step: isize) -> $name<'a, A> {
                 assert!(step != 0);
                 if step < 0 {
                     it.swap_ends();
@@ -148,9 +141,7 @@ macro_rules! stride_impl {
                 let newstride = it.stride * step;
                 let (d, r) = div_rem(len as usize, step as usize);
                 let len = d + if r > 0 { 1 } else { 0 };
-                unsafe {
-                    $name::from_ptr_len(it.begin, len, newstride)
-                }
+                unsafe { $name::from_ptr_len(it.begin, len, newstride) }
             }
 
             /// Swap the begin and end and reverse the stride,
@@ -187,18 +178,15 @@ macro_rules! stride_impl {
             }
         }
 
-        impl<'a, A> Iterator for $name<'a, A>
-        {
+        impl<'a, A> Iterator for $name<'a, A> {
             type Item = $elem;
             #[inline]
-            fn next(&mut self) -> Option<$elem>
-            {
+            fn next(&mut self) -> Option<$elem> {
                 if self.offset == self.end {
                     None
                 } else {
                     unsafe {
-                        let elt: $elem =
-                            mem::transmute(self.begin.offset(self.offset));
+                        let elt: $elem = mem::transmute(self.begin.offset(self.offset));
                         self.offset += self.stride;
                         Some(elt)
                     }
@@ -212,11 +200,9 @@ macro_rules! stride_impl {
             }
         }
 
-        impl<'a, A> DoubleEndedIterator for $name<'a, A>
-        {
+        impl<'a, A> DoubleEndedIterator for $name<'a, A> {
             #[inline]
-            fn next_back(&mut self) -> Option<$elem>
-            {
+            fn next_back(&mut self) -> Option<$elem> {
                 if self.offset == self.end {
                     None
                 } else {
@@ -229,16 +215,14 @@ macro_rules! stride_impl {
             }
         }
 
-        impl<'a, A> ExactSizeIterator for $name<'a, A> { }
+        impl<'a, A> ExactSizeIterator for $name<'a, A> {}
 
-        impl<'a, A> Index<usize> for $name<'a, A>
-        {
+        impl<'a, A> Index<usize> for $name<'a, A> {
             type Output = A;
             /// Return a reference to the element at a given index.
             ///
             /// **Panics** if the index is out of bounds.
-            fn index<'b>(&'b self, i: usize) -> &'b A
-            {
+            fn index<'b>(&'b self, i: usize) -> &'b A {
                 assert!(i < self.len());
                 unsafe {
                     let ptr = self.begin.offset(self.offset + self.stride * (i as isize));
@@ -248,10 +232,10 @@ macro_rules! stride_impl {
         }
 
         impl<'a, A> fmt::Debug for $name<'a, A>
-            where A: fmt::Debug
+        where
+            A: fmt::Debug,
         {
-            fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result
-            {
+            fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
                 r#try!(write!(f, "["));
                 for i in 0..self.len() {
                     if i != 0 {
@@ -262,11 +246,11 @@ macro_rules! stride_impl {
                 write!(f, "]")
             }
         }
-    }
+    };
 }
 
-stride_impl!{struct Stride -> &'a [A], as_ptr, *const A, &'a A}
-stride_impl!{struct StrideMut -> &'a mut [A], as_mut_ptr, *mut A, &'a mut A}
+stride_impl! {struct Stride -> &'a [A], as_ptr, *const A, &'a A}
+stride_impl! {struct StrideMut -> &'a mut [A], as_mut_ptr, *mut A, &'a mut A}
 
 impl<'a, A> Clone for Stride<'a, A> {
     fn clone(&self) -> Stride<'a, A> {

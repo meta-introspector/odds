@@ -1,4 +1,3 @@
-
 /// Fixpoint combinator for rust closures, generalized over the return type.
 ///
 /// **Note:** Use this best through the [`fix`](fn.fix.html) function.
@@ -23,7 +22,9 @@
 /// }));
 ///
 /// ```
-#[cfg_attr(feature="unstable", doc="
+#[cfg_attr(
+    feature = "unstable",
+    doc = "
 ```
 // using feature `unstable`
 use odds::Fix;
@@ -51,7 +52,7 @@ pub struct Fix<'a, T: 'a, R: 'a = T>(pub &'a dyn Fn(Fix<T, R>, T) -> R);
 ///
 /// ```
 /// use odds::fix;
-/// 
+///
 /// assert_eq!(120, fix(5, |f, x| if x == 0 { 1 } else { x * f.call(x - 1) }));
 ///
 /// let data = [true, false];
@@ -60,7 +61,9 @@ pub struct Fix<'a, T: 'a, R: 'a = T>(pub &'a dyn Fn(Fix<T, R>, T) -> R);
 /// }));
 ///
 /// ```
-#[cfg_attr(feature="unstable", doc="
+#[cfg_attr(
+    feature = "unstable",
+    doc = "
 ```
 // using feature `unstable`
 use odds::fix;
@@ -70,7 +73,8 @@ assert_eq!(120, fix(5, |f, x| if x == 0 { 1 } else { x * f(x - 1) }));
 "
 )]
 pub fn fix<T, R, F>(init: T, closure: F) -> R
-    where F: Fn(Fix<T, R>, T) -> R
+where
+    F: Fn(Fix<T, R>, T) -> R,
 {
     Fix(&closure).call(init)
 }
@@ -84,12 +88,14 @@ impl<'a, T, R> Fix<'a, T, R> {
 }
 
 impl<'a, T, R> Clone for Fix<'a, T, R> {
-    fn clone(&self) -> Self { *self }
+    fn clone(&self) -> Self {
+        *self
+    }
 }
 
-impl<'a, T, R> Copy for Fix<'a, T, R> { }
+impl<'a, T, R> Copy for Fix<'a, T, R> {}
 
-#[cfg(feature="unstable")]
+#[cfg(feature = "unstable")]
 impl<'a, T, R> FnOnce<(T,)> for Fix<'a, T, R> {
     type Output = R;
     #[inline]
@@ -98,7 +104,7 @@ impl<'a, T, R> FnOnce<(T,)> for Fix<'a, T, R> {
     }
 }
 
-#[cfg(feature="unstable")]
+#[cfg(feature = "unstable")]
 impl<'a, T, R> FnMut<(T,)> for Fix<'a, T, R> {
     #[inline]
     extern "rust-call" fn call_mut(&mut self, x: (T,)) -> R {
@@ -106,11 +112,10 @@ impl<'a, T, R> FnMut<(T,)> for Fix<'a, T, R> {
     }
 }
 
-#[cfg(feature="unstable")]
+#[cfg(feature = "unstable")]
 impl<'a, T, R> Fn<(T,)> for Fix<'a, T, R> {
     #[inline]
     extern "rust-call" fn call(&self, x: (T,)) -> R {
         self.call(x.0)
     }
 }
-

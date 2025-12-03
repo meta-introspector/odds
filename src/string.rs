@@ -1,23 +1,23 @@
 //! Extensions to `&str` and `String`
 //!
 use crate::std::iter;
-#[cfg(feature="std-string")]
-use std::ptr;
-use crate::std::str;
 use crate::std::ops::Deref;
+use crate::std::str;
+#[cfg(feature = "std-string")]
+use std::ptr;
 
 use crate::IndexRange;
 
 /// Extra methods for `str`
 pub trait StrExt {
-    #[cfg(feature="std-string")]
+    #[cfg(feature = "std-string")]
     /// Repeat the string `n` times.
     ///
     /// Requires `feature="std"`
-    #[deprecated(note="Use str::repeat instead")]
+    #[deprecated(note = "Use str::repeat instead")]
     fn rep(&self, n: usize) -> String;
 
-    #[cfg(feature="std-string")]
+    #[cfg(feature = "std-string")]
     /// Requires `feature="std"`
     fn append(&self, s: &str) -> String;
 
@@ -32,43 +32,56 @@ pub trait StrExt {
 }
 
 /// Extension trait for `str` for string slicing without panicking
-#[deprecated(note="Use str::get with a range instead")]
+#[deprecated(note = "Use str::get with a range instead")]
 pub trait StrSlice {
     /// Return a slice of the string, if it is in bounds /and on character boundaries/,
     /// otherwise return `None`
-    #[deprecated(note="Use str::get with a range instead")]
-    fn get_slice<R>(&self, r: R) -> Option<&str> where R: IndexRange;
+    #[deprecated(note = "Use str::get with a range instead")]
+    fn get_slice<R>(&self, r: R) -> Option<&str>
+    where
+        R: IndexRange;
 }
 
 impl StrExt for str {
-    #[cfg(feature="std-string")]
+    #[cfg(feature = "std-string")]
     fn rep(&self, n: usize) -> String {
         let mut s = String::with_capacity(self.len() * n);
         s.extend((0..n).map(|_| self));
         s
     }
 
-    #[cfg(feature="std-string")]
+    #[cfg(feature = "std-string")]
     fn append(&self, s: &str) -> String {
         String::from(self) + s
     }
 
     fn prefixes(&self) -> Prefixes {
-        Prefixes { s: self, iter: self.char_indices() }
+        Prefixes {
+            s: self,
+            iter: self.char_indices(),
+        }
     }
 
     fn suffixes(&self) -> Suffixes {
-        Suffixes { s: self, iter: self.char_indices() }
+        Suffixes {
+            s: self,
+            iter: self.char_indices(),
+        }
     }
 
     fn substrings(&self) -> Substrings {
-        Substrings { iter: self.prefixes().flat_map(str::suffixes) }
+        Substrings {
+            iter: self.prefixes().flat_map(str::suffixes),
+        }
     }
 }
 
 #[allow(deprecated)]
 impl StrSlice for str {
-    fn get_slice<R>(&self, r: R) -> Option<&str> where R: IndexRange {
+    fn get_slice<R>(&self, r: R) -> Option<&str>
+    where
+        R: IndexRange,
+    {
         let start = r.start().unwrap_or(0);
         let end = r.end().unwrap_or(self.len());
         if start <= end && self.is_char_boundary(start) && self.is_char_boundary(end) {
@@ -129,11 +142,11 @@ impl<'a> Iterator for Substrings<'a> {
 /// Requires `feature="std-string"`
 pub trait StringExt {
     /// **Panics** if `index` is out of bounds.
-    #[deprecated(note="Use String::insert_str")]
+    #[deprecated(note = "Use String::insert_str")]
     fn insert_str(&mut self, index: usize, s: &str);
 }
 
-#[cfg(feature="std-string")]
+#[cfg(feature = "std-string")]
 impl StringExt for String {
     /// **Panics** if `index` is out of bounds.
     fn insert_str(&mut self, index: usize, s: &str) {
@@ -143,12 +156,12 @@ impl StringExt for String {
         unsafe {
             let v = self.as_mut_vec();
             let ptr = v.as_mut_ptr();
-            ptr::copy(ptr.offset(index as isize),
-                      ptr.offset((index + s.len()) as isize),
-                      v.len() - index);
-            ptr::copy_nonoverlapping(s.as_ptr(),
-                                     ptr.offset(index as isize),
-                                     s.len());
+            ptr::copy(
+                ptr.offset(index as isize),
+                ptr.offset((index + s.len()) as isize),
+                v.len() - index,
+            );
+            ptr::copy_nonoverlapping(s.as_ptr(), ptr.offset(index as isize), s.len());
             let new_len = v.len() + s.len();
             v.set_len(new_len);
         }
@@ -228,8 +241,16 @@ impl<'a> CharWindows<'a> {
     fn new(s: &'a str, n: usize) -> Self {
         assert!(n != 0);
         match s.char_indices().nth(n - 1) {
-            None => CharWindows { s: s, a: s.len(), b: s.len() },
-            Some((i, ch)) => CharWindows { s: s, a: 0, b: i + ch.len_utf8() }
+            None => CharWindows {
+                s: s,
+                a: s.len(),
+                b: s.len(),
+            },
+            Some((i, ch)) => CharWindows {
+                s: s,
+                a: 0,
+                b: i + ch.len_utf8(),
+            },
         }
     }
 }
@@ -280,9 +301,7 @@ impl CharStr {
 impl Deref for CharStr {
     type Target = str;
     fn deref(&self) -> &str {
-        unsafe {
-            str::from_utf8_unchecked(&self.buf[..self.len as usize])
-        }
+        unsafe { str::from_utf8_unchecked(&self.buf[..self.len as usize]) }
     }
 }
 
@@ -325,7 +344,7 @@ fn test_slice() {
     assert_eq!(t.get_slice(..), Some(t));
     assert_eq!(t.get_slice(0..t.len()), Some(t));
     assert_eq!(t.get_slice(1..), None);
-    assert_eq!(t.get_slice(0..t.len()+1), None);
-    assert_eq!(t.get_slice(t.len()+1..), None);
+    assert_eq!(t.get_slice(0..t.len() + 1), None);
+    assert_eq!(t.get_slice(t.len() + 1..), None);
     assert_eq!(t.get_slice(t.len()..), Some(""));
 }

@@ -1,14 +1,14 @@
 //! A reversed view of a slice.
 
-use crate::std::hash::{Hasher, Hash};
-use crate::std::mem::transmute;
+use crate::std::hash::{Hash, Hasher};
 use crate::std::iter::Rev;
+use crate::std::mem::transmute;
 use crate::std::slice::{Iter, IterMut};
 
 use crate::std::ops::{Index, IndexMut};
 
-use unchecked_index::{get_unchecked, get_unchecked_mut};
 use crate::IndexRange;
+use unchecked_index::{get_unchecked, get_unchecked_mut};
 
 use super::SliceFind;
 
@@ -68,9 +68,7 @@ impl<T> RevSlice<T> {
     ///
     /// See also indexing notation: `&foo[i]`.
     pub fn get(&self, i: usize) -> Option<&T> {
-        unsafe {
-            self.raw_index(i).map(move |ri| get_unchecked(&self.0, ri))
-        }
+        unsafe { self.raw_index(i).map(move |ri| get_unchecked(&self.0, ri)) }
     }
 
     /// Get element at index `i`.
@@ -78,7 +76,8 @@ impl<T> RevSlice<T> {
     /// See also indexing notation: `&mut foo[i]`.
     pub fn get_mut(&mut self, i: usize) -> Option<&mut T> {
         unsafe {
-            self.raw_index(i).map(move |ri| get_unchecked_mut(&mut self.0, ri))
+            self.raw_index(i)
+                .map(move |ri| get_unchecked_mut(&mut self.0, ri))
         }
     }
 
@@ -92,9 +91,7 @@ impl<T> RevSlice<T> {
 
     #[cfg(feature = "std")]
     pub fn into_boxed_slice(self: Box<Self>) -> Box<[T]> {
-        unsafe {
-            transmute(self)
-        }
+        unsafe { transmute(self) }
     }
 
     /// Return a by-reference iterator
@@ -123,7 +120,8 @@ impl<T> RevSlice<T> {
 }
 
 impl<T, U> PartialEq<RevSlice<U>> for RevSlice<T>
-    where T: PartialEq<U>,
+where
+    T: PartialEq<U>,
 {
     fn eq(&self, rhs: &RevSlice<U>) -> bool {
         self.0 == rhs.0
@@ -132,7 +130,8 @@ impl<T, U> PartialEq<RevSlice<U>> for RevSlice<T>
 
 /// `RevSlice` compares by logical element sequence.
 impl<T, U> PartialEq<[U]> for RevSlice<T>
-    where T: PartialEq<U>,
+where
+    T: PartialEq<U>,
 {
     fn eq(&self, rhs: &[U]) -> bool {
         if self.len() != rhs.len() {
@@ -148,7 +147,8 @@ impl<T, U> PartialEq<[U]> for RevSlice<T>
 }
 
 impl<T> Hash for RevSlice<T>
-    where T: Hash,
+where
+    T: Hash,
 {
     fn hash<H: Hasher>(&self, h: &mut H) {
         // hash like a slice of the same logical sequence
@@ -160,31 +160,27 @@ impl<T> Hash for RevSlice<T>
 }
 
 impl<'a, T, Slice: ?Sized> From<&'a Slice> for &'a RevSlice<T>
-    where Slice: AsRef<[T]>
+where
+    Slice: AsRef<[T]>,
 {
     fn from(slc: &'a Slice) -> Self {
-        unsafe {
-            transmute(slc.as_ref())
-        }
+        unsafe { transmute(slc.as_ref()) }
     }
 }
 
 impl<'a, T, Slice: ?Sized> From<&'a mut Slice> for &'a mut RevSlice<T>
-    where Slice: AsMut<[T]>
+where
+    Slice: AsMut<[T]>,
 {
     fn from(slc: &'a mut Slice) -> Self {
-        unsafe {
-            transmute(slc.as_mut())
-        }
+        unsafe { transmute(slc.as_mut()) }
     }
 }
 
 #[cfg(feature = "std")]
 impl<T> From<Box<[T]>> for Box<RevSlice<T>> {
     fn from(slc: Box<[T]>) -> Self {
-        unsafe {
-            transmute(slc)
-        }
+        unsafe { transmute(slc) }
     }
 }
 
@@ -194,7 +190,11 @@ impl<T> Index<usize> for RevSlice<T> {
         if let Some(x) = self.get(i) {
             x
         } else {
-            panic!("Index {} is out of bounds for RevSlice of length {}", i, self.len());
+            panic!(
+                "Index {} is out of bounds for RevSlice of length {}",
+                i,
+                self.len()
+            );
         }
     }
 }
@@ -205,7 +205,10 @@ impl<T> IndexMut<usize> for RevSlice<T> {
         if let Some(x) = self.get_mut(i) {
             return x;
         } else {
-            panic!("Index {} is out of bounds for RevSlice of length {}", i, len);
+            panic!(
+                "Index {} is out of bounds for RevSlice of length {}",
+                i, len
+            );
         }
     }
 }
@@ -223,7 +226,8 @@ impl<'a, T> Default for &'a mut RevSlice<T> {
 }
 
 impl<T, R> Index<R> for RevSlice<T>
-    where R: IndexRange,
+where
+    R: IndexRange,
 {
     type Output = RevSlice<T>;
     fn index(&self, index: R) -> &RevSlice<T> {
@@ -235,14 +239,13 @@ impl<T, R> Index<R> for RevSlice<T>
         assert!(start <= end && end <= self.len());
         let end_r = self.len() - start;
         let start_r = self.len() - end;
-        unsafe {
-            <&RevSlice<_>>::from(get_unchecked(&self.0, start_r..end_r))
-        }
+        unsafe { <&RevSlice<_>>::from(get_unchecked(&self.0, start_r..end_r)) }
     }
 }
 
 impl<T, R> IndexMut<R> for RevSlice<T>
-    where R: IndexRange,
+where
+    R: IndexRange,
 {
     fn index_mut(&mut self, index: R) -> &mut RevSlice<T> {
         // [0 1 2 3 4]
@@ -253,9 +256,7 @@ impl<T, R> IndexMut<R> for RevSlice<T>
         assert!(start <= end && end <= self.len());
         let end_r = self.len() - start;
         let start_r = self.len() - end;
-        unsafe {
-            <&mut RevSlice<_>>::from(get_unchecked_mut(&mut self.0, start_r..end_r))
-        }
+        unsafe { <&mut RevSlice<_>>::from(get_unchecked_mut(&mut self.0, start_r..end_r)) }
     }
 }
 
@@ -278,19 +279,19 @@ impl<'a, T> IntoIterator for &'a mut RevSlice<T> {
 impl<T> SliceFind for RevSlice<T> {
     type Item = T;
     fn find<U: ?Sized>(&self, elt: &U) -> Option<usize>
-        where Self::Item: PartialEq<U>
+    where
+        Self::Item: PartialEq<U>,
     {
         self.0.rfind(elt).map(move |i| self.raw_index_no_wrap(i))
     }
 
     fn rfind<U: ?Sized>(&self, elt: &U) -> Option<usize>
-        where Self::Item: PartialEq<U>
+    where
+        Self::Item: PartialEq<U>,
     {
         self.0.find(elt).map(move |i| self.raw_index_no_wrap(i))
     }
 }
-
-
 
 #[test]
 fn test_rev_slice_1() {
@@ -328,7 +329,7 @@ fn test_rev_slice_slice() {
     let rev = [4, 3, 2, 1];
 
     let r = <&RevSlice<_>>::from(&data[..]);
-    
+
     for i in 0..r.len() {
         for j in i..r.len() {
             //println!("{:?}, {:?}", &r[i..j], &rev[i..j]);
@@ -342,7 +343,7 @@ fn test_rev_slice_find() {
     let data = [1, 2, 3, 4];
 
     let r = <&RevSlice<_>>::from(&data[..]);
-    
+
     for (i, elt) in r.into_iter().enumerate() {
         assert_eq!(r.find(elt), Some(i));
     }
